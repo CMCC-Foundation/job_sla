@@ -1,0 +1,26 @@
+#!/bin/bash
+
+##### script to check active sla pending jobs by Marco e Danilo #####
+
+echo 'SC JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME'; 
+
+pre_stat=${1:-'p'}
+pre_queue=${2:-'all'}
+
+stat=$(if [[ "$pre_stat" == 'p' ]]; then echo 'PEND'; else echo 'RUN'; fi)
+#queue=$(if [[ "$pre_queue" == 'serial' ]]; then echo 'SC_SERIAL'; elif [[ "$pre_queue" == 'parallel' ]]; then echo 'PARALLEL'; fi)
+
+#echo "pre_stat is" "$pre_stat"
+#echo "stat is" "$stat"
+
+if [ "$pre_queue" == 's' ] || [ "$pre_queue" == 'p' ];
+then
+	#echo "queue is: ""$pre_queue"
+	opt=$(if [[ "$pre_queue" == 's' ]]; then echo "grep"; else echo "grep -v"; fi)
+
+	bsla | grep "SERVICE CLASS NAME" | cut -d':' -f2 | $opt SC_SERIAL | sed 1d | tr -d ' ' | xargs -I{} sh -c "echo -n {}' ' ; bjobs -"$pre_stat" -u all -sla {} | grep $stat ; echo" 2>/dev/null | grep $stat
+else
+        #echo "queue is:	""$pre_queue" 
+	bsla | grep "SERVICE CLASS NAME" | cut -d':' -f2 | sed 1d | tr -d ' ' | xargs -I{} sh -c "echo -n {}' ' ; bjobs -"$pre_stat" -u all -sla {} | grep $stat ; echo" 2>/dev/null | grep $stat
+
+fi
